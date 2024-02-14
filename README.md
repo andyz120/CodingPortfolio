@@ -1,9 +1,7 @@
 Hey everyone!
 
-I have SQL projects along with python and tableau projects here!
+I have SQL projects along with Python and Tableau projects here!
 
 Have a look!
 
-Best Regards,
 
-Andy Zhou
