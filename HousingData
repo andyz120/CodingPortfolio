@@ -1,0 +1,150 @@
+SELECT *
+
+FROM dbo.HousingData
+
+ALTER TABLE dbo.HousingData ALTER COLUMN SaleDate DATE
+
+----------------------------------------------------------------------
+--Populate data where Propertyaddress is null--
+
+SELECT *
+FROM dbo.HousingData
+WHERE Propertyaddress is null 
+ORDER BY ParcelID
+
+
+SELECT a.ParcelID, a.PropertyAddress, b.ParcelID, b.PropertyAddress
+FROM dbo.HousingData a
+JOIN dbo.HousingData b
+	on a.ParcelID= B.ParcelID
+	AND a.[UniqueID] <> b.[UniqueID]
+WHERE a.PropertyAddress is null
+
+UPDATE a
+SET PropertyAddress = ISNULL(a.PropertyAddress, b.PropertyAddress)
+FROM dbo.HousingData a
+JOIN dbo.HousingData b
+	on a.ParcelID = b.ParcelID
+WHERE a.PropertyAddress is null
+
+------------------------------------
+SELECT PropertyAddress
+FROM dbo.HousingData
+
+SELECT
+SUBSTRING(PropertyAddress, 1, CHARINDEX(',', PropertyAddress) -1) AS Address,
+---- this goes to position 1 of the comma and -1 goes back to rid it
+SUBSTRING(PropertyAddress, CHARINDEX(',', PropertyAddress) +1, LEN(PropertyAddress)) as Address
+ 
+FROM dbo.HousingData
+
+
+----------------------------------
+
+ALTER TABLE HousingData
+ADD PropertySplitAddress Nvarchar(255);
+
+Update HousingData
+SET PropertySplitAddress = SUBSTRING(PropertyAddress, 1, CHARINDEX(',', PropertyAddress) -1)
+
+ALTER TABLE HousingData
+Add PropertySplitCity Nvarchar(255);
+
+Update HousingData
+SET PropertySplitCity = SUBSTRING(PropertyAddress, CHARINDEX(',', PropertyAddress) +1, LEN(PropertyAddress))
+
+
+
+
+SELECT 
+PARSENAME(REPLACE(OwnerAddress, ',', '.'), 3),
+PARSENAME(REPLACE(OwnerAddress, ',', '.'), 2),
+PARSENAME(REPLACE(OwnerAddress, ',', '.'), 1)
+FROM dbo.HousingData
+
+ALTER TABLE HousingData
+Add OwnerSplitAddress Nvarchar(255);
+
+UPDATE HousingData
+SET OwnersplitAddress = PARSENAME(REPLACE(OwnerAddress, ',', '.'), 3)
+
+ALTER TABLE HousingData
+Add OwnerSplitCity Nvarchar(255);
+
+UPDATE HousingData
+SET OwnerSplitCity = PARSENAME(REPLACE(OwnerAddress, ',', '.'), 2)
+
+
+
+
+ALTER TABLE HousingData
+Add OwnerSplitState Nvarchar(255);
+
+UPDATE HousingData
+SET OwnerSplitState = PARSENAME(REPLACE(OwnerAddress, ',', '.'), 1)
+
+
+	
+SELECT *
+FROM dbo.HousingData
+
+----------------------------------------------------------------------
+-- Change Y AND N to Yes and No in "Sold as Vacant" field--
+
+SELECT Distinct(SoldAsVacant), Count(SoldAsVacant)
+FROM dbo.HousingData
+Group By SoldAsVacant
+order by 2
+
+SELECT SoldAsVacant,
+CASE WHEN SoldAsVacant = 'Y' then 'Yes'
+WHEN SoldAsVacant = 'N' then 'No'
+Else SoldAsVacant
+END
+FROM dbo.HousingData
+
+
+UPDATE HousingData
+SET SoldAsVacant = CASE WHEN SoldAsVacant = 'Y' then 'Yes'
+WHEN SoldAsVacant = 'N' then 'No'
+Else SoldAsVacant
+END
+
+
+-- Remove Duplicates--
+
+
+WITH RowNumCTE AS( 
+SELECT *,
+	ROW_NUMBER() OVER (
+	PARTITION BY ParcelID, PropertyAddress, SalePrice, SaleDate, LegalReference
+	ORDER BY 
+	UniqueID
+	) row_num
+
+FROM dbo.HousingData
+--order by ParcelID
+)
+DELETE
+FROM RowNumCTE
+WHERE row_num> 1
+
+
+--------------------------------------------------------------------
+
+
+--Delete Unused Columns--
+
+SELECT *
+FROM dbo.HousingData
+
+Alter TABLE dbo.HousingData
+DROP COLUMN OwnerAddress, TaxDistrict, PropertyAddress
+
+ALTER TABLE dbo.HousingData
+DROP COLUMN SaleDate
+
+
+
+
+
