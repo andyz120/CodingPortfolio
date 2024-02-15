@@ -1,4 +1,4 @@
-Hey everyone!
+Hey everyone, Andy here!
 
 I have SQL projects along with Python and Tableau projects here!
 
